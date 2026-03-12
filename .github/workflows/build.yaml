@@ -114,6 +114,17 @@ jobs:
           </project>
           EOF
 
+      - name: Inspect manual LaunchWrapper artifact
+        run: |
+          ls -lah ~/.m2/repository/net/minecraft/launchwrapper/1.17.2 || true
+          file ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar || true
+          unzip -t ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar || true
+          head -c 200 ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar | xxd || true
+
+      - name: Print runtime classpath for debugging
+        working-directory: ./upstream
+        run: ./gradlew dependencies --configuration runtimeClasspath --no-daemon
+        
       - name: Build jar
         working-directory: ./upstream
         run: ./gradlew jar --no-daemon
