@@ -99,17 +99,20 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./upstream/gradlew
 
-      - name: Patch LaunchWrapper typo in source
+      - name: Patch LaunchWrapper version in source
         working-directory: ./upstream
         run: |
-          if grep -R -n "net.minecraft:launchwrapper:1.17.2" .; then
-            grep -R -l "net.minecraft:launchwrapper:1.17.2" . | while read -r file; do
-              sed -i 's/net\.minecraft:launchwrapper:1\.17\.2/net.minecraft:launchwrapper:1.12.2/g' "$file"
-              echo "Patched $file"
-            done
-          else
-            echo "No launchwrapper typo found"
-          fi
+          grep -R -n "launchwrapper" . || true
+
+          grep -R -l "net.minecraft:launchwrapper:1.17.2" . | while read -r file; do
+            sed -i 's/net\.minecraft:launchwrapper:1\.17\.2/net.minecraft:launchwrapper:1.12/g' "$file"
+            echo "Patched typo in $file"
+          done
+
+          grep -R -l "net.minecraft:launchwrapper:1.12.2" . | while read -r file; do
+            sed -i 's/net\.minecraft:launchwrapper:1\.12\.2/net.minecraft:launchwrapper:1.12/g' "$file"
+            echo "Patched typo in $file"
+          done
 
       - name: Show patched launchwrapper lines
         working-directory: ./upstream
