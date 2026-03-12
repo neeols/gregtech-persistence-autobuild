@@ -99,15 +99,25 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./upstream/gradlew
 
+      - name: Find repositories blocks
+        working-directory: ./upstream
+        run: |
+          echo "==== build.gradle ===="
+          grep -n "repositories" build.gradle || true
+          echo "==== dependencies.gradle ===="
+          grep -n "repositories" dependencies.gradle || true
+          echo "==== addon.gradle ===="
+          grep -n "repositories" addon.gradle || true
+
       - name: Inject Forge Maven repository
         working-directory: ./upstream
         run: |
-          if [ ! -f repositories.gradle ]; then
-            echo "repositories.gradle not found"
+          if [ ! -f build.gradle ]; then
+            echo "build.gradle not found"
             exit 1
           fi
 
-          if ! grep -q "maven.minecraftforge.net" repositories.gradle; then
+          if ! grep -q "maven.minecraftforge.net" build.gradle; then
             awk '
               BEGIN { added=0 }
               /repositories[[:space:]]*\{/ && !added {
@@ -120,10 +130,10 @@ jobs:
                 next
               }
               { print }
-            ' repositories.gradle > repositories.gradle.tmp && mv repositories.gradle.tmp repositories.gradle
-            echo "Injected Forge Maven into repositories.gradle"
+            ' build.gradle > build.gradle.tmp && mv build.gradle.tmp build.gradle
+            echo "Injected Forge Maven into build.gradle"
           else
-            echo "Forge Maven already present"
+            echo "Forge Maven already present in build.gradle"
           fi
 
       - name: Build jar
