@@ -99,32 +99,23 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./upstream/gradlew
 
-      - name: Install LaunchWrapper manually
-        run: |
-          mkdir -p ~/.m2/repository/net/minecraft/launchwrapper/1.17.2
-          curl -L -o ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar \
-            https://github.com/MinecraftForge/LegacyLauncher/raw/master/launchwrapper/src/main/resources/launchwrapper-1.17.jar
-
-          cat > ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.pom <<EOF
-          <project>
-            <modelVersion>4.0.0</modelVersion>
-            <groupId>net.minecraft</groupId>
-            <artifactId>launchwrapper</artifactId>
-            <version>1.17.2</version>
-          </project>
-          EOF
-
-      - name: Inspect manual LaunchWrapper artifact
-        run: |
-          ls -lah ~/.m2/repository/net/minecraft/launchwrapper/1.17.2 || true
-          file ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar || true
-          unzip -t ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar || true
-          head -c 200 ~/.m2/repository/net/minecraft/launchwrapper/1.17.2/launchwrapper-1.17.2.jar | xxd || true
-
-      - name: Print runtime classpath for debugging
+      - name: Patch LaunchWrapper typo in source
         working-directory: ./upstream
-        run: ./gradlew dependencies --configuration runtimeClasspath --no-daemon
-        
+        run: |
+          if grep -R -n "net.minecraft:launchwrapper:1.17.2" .; then
+            grep -R -l "net.minecraft:launchwrapper:1.17.2" . | while read -r file; do
+              sed -i 's/net\.minecraft:launchwrapper:1\.17\.2/net.minecraft:launchwrapper:1.12.2/g' "$file"
+              echo "Patched $file"
+            done
+          else
+            echo "No launchwrapper typo found"
+          fi
+
+      - name: Show patched launchwrapper lines
+        working-directory: ./upstream
+        run: |
+          grep -R -n "launchwrapper" . || true
+
       - name: Build jar
         working-directory: ./upstream
         run: ./gradlew jar --no-daemon
