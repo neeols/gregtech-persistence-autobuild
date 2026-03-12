@@ -2,10 +2,6 @@ name: Auto Releases
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - master
 
 concurrency:
   group: gregtech-persistence-autobuild
