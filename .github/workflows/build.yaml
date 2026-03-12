@@ -102,34 +102,30 @@ jobs:
       - name: Inject Forge Maven repository
         working-directory: ./upstream
         run: |
-          if [ -f repositories.gradle ]; then
-            if ! grep -q "maven.minecraftforge.net" repositories.gradle; then
-              python3 <<'PY'
-from pathlib import Path
-
-p = Path("repositories.gradle")
-text = p.read_text()
-
-block = """maven {
-    name = 'Forge Maven'
-    url = 'https://maven.minecraftforge.net'
-}
-"""
-
-if "repositories {" in text:
-    text = text.replace("repositories {", "repositories {\n" + block, 1)
-else:
-    raise SystemExit("Could not find repositories { in repositories.gradle")
-
-p.write_text(text)
-print("Injected Forge Maven into repositories.gradle")
-PY
-            fi
-          else
+          if [ ! -f repositories.gradle ]; then
             echo "repositories.gradle not found"
             exit 1
           fi
-          
+
+          if ! grep -q "maven.minecraftforge.net" repositories.gradle; then
+            awk '
+              BEGIN { added=0 }
+              /repositories[[:space:]]*\{/ && !added {
+                print
+                print "    maven {"
+                print "        name = '\''Forge Maven'\''"
+                print "        url = '\''https://maven.minecraftforge.net'\''"
+                print "    }"
+                added=1
+                next
+              }
+              { print }
+            ' repositories.gradle > repositories.gradle.tmp && mv repositories.gradle.tmp repositories.gradle
+            echo "Injected Forge Maven into repositories.gradle"
+          else
+            echo "Forge Maven already present"
+          fi
+
       - name: Build jar
         working-directory: ./upstream
         run: ./gradlew jar --no-daemon
